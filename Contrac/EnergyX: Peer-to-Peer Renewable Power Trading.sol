@@ -1,0 +1,67 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.20;
+
+/**
+ * @title EnergyX - Decentralized Renewable Energy Trading Platform
+ * @dev This smart contract allows producers to sell renewable energy
+ *      and consumers to purchase it transparently using blockchain.
+ */
+contract EnergyX {
+    address public owner;
+
+    struct EnergyTrade {
+        address producer;
+        address consumer;
+        uint256 amount; // in kWh
+        uint256 price;  // in wei per kWh
+        bool completed;
+    }
+
+    uint256 public tradeCount = 0;
+    mapping(uint256 => EnergyTrade) public trades;
+
+    event EnergyListed(uint256 tradeId, address producer, uint256 amount, uint256 price);
+    event EnergyPurchased(uint256 tradeId, address consumer, uint256 totalCost);
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+    constructor() {
+        owner = msg.sender;
+    }
+
+    // 🔋 Function 1: List renewable energy for sale
+    function listEnergy(uint256 _amount, uint256 _price) external {
+        require(_amount > 0, "Amount must be greater than 0");
+        require(_price > 0, "Price must be greater than 0");
+
+        tradeCount++;
+        trades[tradeCount] = EnergyTrade(msg.sender, address(0), _amount, _price, false);
+
+        emit EnergyListed(tradeCount, msg.sender, _amount, _price);
+    }
+
+    // ⚡ Function 2: Purchase listed energy
+    function buyEnergy(uint256 _tradeId) external payable {
+        EnergyTrade storage trade = trades[_tradeId];
+        require(!trade.completed, "Trade already completed");
+        require(trade.producer != address(0), "Invalid trade ID");
+
+        uint256 totalCost = trade.amount * trade.price;
+        require(msg.value >= totalCost, "Insufficient payment");
+
+        trade.consumer = msg.sender;
+        trade.completed = true;
+
+        payable(trade.producer).transfer(totalCost);
+
+        emit EnergyPurchased(_tradeId, msg.sender, totalCost);
+    }
+
+    // 🔐 Function 3: Transfer contract ownership (admin function)
+    function transferOwnership(address newOwner) external {
+        require(msg.sender == owner, "Only owner can transfer ownership");
+        require(newOwner != address(0), "Invalid address");
+
+        emit OwnershipTransferred(owner, newOwner);
+        owner = newOwner;
+    }
+}
