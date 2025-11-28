@@ -21,7 +21,7 @@ contract EnergyX {
     mapping(uint256 => EnergyTrade) public trades;
 
     event EnergyListed(uint256 tradeId, address producer, uint256 amount, uint256 price);
-    event EnergyPurchased(uint256 tradeId, address consumer, uint256 totalCost);
+    event Energy Purchased(uint256 tradeId, address consumer, uint256 totalCost);
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
     constructor() {
